@@ -1,0 +1,63 @@
+[project]
+name = "longitudinal-embeddings"
+version = "0.1.0"
+description = "Tumor-cellularity coherence of medical foundation-model embeddings on CFB-GBM (NCN OPUS-29)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "h5py",
+    "scipy",
+    "scikit-learn",
+    "umap-learn",
+    "matplotlib",
+    "SimpleITK",
+    "pandas",
+]
+
+[project.optional-dependencies]
+# One extra per backbone; `uv sync --all-extras` installs everything except NeuroVFM,
+# which needs its own environment (see scripts/embed_neurovfm_cfb_gbm.py).
+merlin      = ["torch", "monai", "merlin-vlm"]
+medsiglip   = ["torch", "transformers", "huggingface_hub", "pillow"]
+med3d       = ["torch", "monai", "huggingface_hub"]
+imagenet_vit = ["torch", "timm", "torchvision", "pillow"]
+biomedclip  = ["torch", "open_clip_torch"]
+clip        = ["torch", "open_clip_torch", "pillow"]
+medimageinsights = [
+    "torch", "pillow", "mup", "fvcore", "requests", "cffi",
+    "cloudpickle", "colorama", "sentencepiece", "tenacity", "tornado",
+]
+cellularity = ["tumortwin"]
+finetune    = ["torch", "open_clip_torch", "pillow", "peft"]
+dev         = ["pytest", "pytest-cov"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["data", "embeddings", "analysis", "finetune"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv.sources]
+# TumorTwin (https://github.com/OncologyModelingGroup/TumorTwin) has no PyPI release;
+# pinned to a specific commit for reproducibility.
+tumortwin = { git = "https://github.com/OncologyModelingGroup/TumorTwin.git", rev = "bedf90a6d47ba48cf5cdb25901967d84730061d1" }
+
+[tool.uv]
+# TumorTwin pins numpy==1.23.5 exactly, which would force-downgrade the numpy every
+# other backend here (torch/transformers/merlin-vlm/etc.) already relies on at 2.x.
+# Its own cellularity/TCC code only uses baseline numpy ops (log10, clip, sum, ...)
+# that are unaffected by the 1.23 -> 2.x change, so it's safe to override. Floor
+# matches merlin-vlm's own declared minimum (numpy>=1.26.4), the strictest of any
+# dependency here.
+override-dependencies = ["numpy>=1.26.4"]
+
+[dependency-groups]
+dev = [
+    "h5py>=3.16.0",
+    "pytest>=9.0.3",
+    "scikit-learn>=1.8.0",
+    "scipy>=1.17.1",
+    "umap-learn>=0.5.12",
+]

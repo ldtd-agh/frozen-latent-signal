@@ -1,0 +1,3 @@
+[submodule "third_party/MedImageInsights"]
+	path = third_party/MedImageInsights
+	url = https://huggingface.co/lion-ai/MedImageInsights
